@@ -77,7 +77,7 @@ const { resolve, _join, relative } = path
 // for e.g., / redirects to /home then the redirect is followed during rendering
 // and the final route that renders to string is put in the folder for /.
 
-// getRoutes :: RelativePath -> [ReactRouterRoute]
+// getReactRouterRoutes :: RelativePath -> [ReactRouterRoute]
 function getReactRouterRoutes(rootDir) {
   // readdir ./routes and recursively get a list of filenames relative to ./routes
   // return that as an array
