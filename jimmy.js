@@ -74,7 +74,6 @@ function getReactRouterRoutes(rootDir) {
     const files = readdirSync(dir)
     const filesData = files.map(file => {
       const subDir = resolve(dir, file)
-      // console.log('file:', `./${file}`, resolve(__dirname, './App/Routes'), resolve(dir, file))
       const f = statSync(subDir)
       return {
         isDirectory: f.isDirectory(),
@@ -97,7 +96,6 @@ function getReactRouterRoutes(rootDir) {
       return acc
     }, [])
 
-    // console.log(result)
     return result
   } catch (e) {
     // eslint-disable-next-line no-console
@@ -121,10 +119,6 @@ async function getRouteToComponentModuleMap(routes) {
         }
       })
     )
-    // routeToComponentMap.forEach(({ route, component }) => {
-    //   // eslint-disable-next-line no-console
-    //   console.log(route, component.default.toString())
-    // })
 
     return routeToComponentMap.reduce((acc, { route, component }) => {
       acc[route] = component
@@ -149,7 +143,6 @@ function buildLinksAndRoutes(routeToComponentModuleMap) {
       )
       const RouteC = <Route key={i} exact path={route} component={componentModule.default} />
 
-      // console.log(RouteC.toString())
       acc.links.push(LinkC)
       acc.routes.push(RouteC)
       return acc
@@ -163,12 +156,10 @@ function renderRoutes(routeToComponentModuleMap, { links, routes }) {
   // call reactServerDOM.renderToString here for all
   // routes and put generated files in the right path
   // under ./public/
-  // console.log(routeToComponentModuleMap)
 
   return Object.entries(routeToComponentModuleMap).reduce((acc, [route]) => {
     const context = {}
     const renderRoute = routeToRender => {
-      // console.log(routeToRender)
       const app = ReactDOMServer.renderToString(
         <StaticRouter context={context} location={routeToRender}>
           <App links={links} routes={routes} />
@@ -181,8 +172,6 @@ function renderRoutes(routeToComponentModuleMap, { links, routes }) {
     let app = renderRoute(route)
 
     if (context.url) {
-      // xeslint-disable-next-line no-console
-      // console.log('Redirected to url', context.url)
       app = renderRoute(context.url)
     }
 
@@ -232,12 +221,12 @@ ReactDOM.hydrate(
 )`
 }
 
+/* eslint-disable no-console */
 async function run() {
   const routeToComponentModuleMap = await getRouteToComponentModuleMap(
     getReactRouterRoutes('./App/Routes')
   )
 
-  // console.log('Routes to components map\n', routeToComponentModuleMap)
   const linksAndRoutes = buildLinksAndRoutes(routeToComponentModuleMap)
 
   // write ./App/Main.js
@@ -261,7 +250,7 @@ async function run() {
     'npx webpack --config webpack.static.config.js'
   )
 
-  const webpackStaticBundlingLogs = ['app.js', 'app.css']
+  const webpackStaticBundlingLogs = ['app.js', 'app.css', 'app.js.map', 'app.css.map']
     .filter(f => webpackStaticBundlingStdout.includes(f))
     .map(f => `Generated ${resolve(__dirname, `public/assets/${f}`)}`)
   console.log(webpackStaticBundlingLogs.join('\n'))
@@ -279,5 +268,5 @@ function execProm(...args) {
   })
 }
 
-// eslint-disable-next-line no-console
 run().catch(console.error.bind(console))
+/* eslint-enable no-console */

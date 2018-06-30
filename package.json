@@ -6,6 +6,7 @@
   "scripts": {
     "bundle": "webpack --watch",
     "dev": "node bin/jimmy.js",
+    "build": "NODE_ENV=production node bin/jimmy.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
