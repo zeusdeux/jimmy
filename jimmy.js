@@ -24,7 +24,8 @@ const { resolve, _join, relative } = path
  * ./index.js -> project root has an index.js which exports a react component
  * that is used as a shell to generate all files. It's equivalent to
  * index.html. ReactDOMServer.renderToStaticMarkup is used to render this file.
- * Rendered file name depends on the route being rendered.
+ * Rendered file name depends on the route being rendered. If not found, index.default.js is used.
+ * Though this is sort of a lie as right now index.default.js is hardcoded to be used.
  *
  * App/index.js -> This react component will be given [<Link />] and [<Route />]
  * It can choose to render those arrays however and where ever it wants. It's
@@ -40,25 +41,36 @@ const { resolve, _join, relative } = path
  */
 
 // 1.
-// generate route manifest from ./App/Routes/
-// shape { ReactRouterRouteName: componentModule }
+// generate route list relative to ./App/Routes/
 
 // 2.
+// generate route manifest from route list received from step 1
+// shape { ReactRouterRoute: componentModule }
+
+// 3.
 // build <Link /> array
 // build <Route /> array
 
-// 3.
-// generate App/Main.js using makeMain
-
 // 4.
-// generate js and css bundles using App/Main.js using that as entry for webpack
-// put em in /public/assets
+// Render a map from route to index.html string for that route
 
 // 5.
-// Using the route manifest, ./index.js, StaticRouter and App/index.js
-// generate static html files for each route
-// Each one is basically going to be an instance of the index file but
-// in the right directory structure under public/
+// generate App/Main.js using makeMain that contains all the imports
+// and <Link /> and <Route /> jsx. This will be used as the entry point
+// to make the client bundle. Therefore, it should have a call to
+// ReactDOM.hydrate or ReactDOM.render.
+
+// 6.
+// Write App/Main.js down to disk
+
+// 7.
+// Render all index.html for all routes
+
+// 8.
+// generate js and css bundles using App/Main.js using that as entry for webpack
+// put em in /public/assets. The config file used for this is webpack.static.config.js
+
+// Done!
 
 // NOTES:
 // Redirects are reified. This means, while rendering if a redirect is encountered,
@@ -105,8 +117,9 @@ function getReactRouterRoutes(rootDir) {
 }
 
 // type ReactRouterRoute = String
-// data ComponentModule = { default :: ReactComponent }
-// getRouteToComponentMap :: [ReactRouterRoute] -> Map ReactRouterRoute ComponentModule
+// data ComponentModule = ComponentModule { default :: ReactComponent }
+// type RouteToComponentMap = Map ReactRouterRoute ComponentModule
+// getRouteToComponentMap :: [ReactRouterRoute] -> RouteToComponentMap
 async function getRouteToComponentModuleMap(routes) {
   try {
     const routeToComponentMap = await Promise.all(
@@ -129,6 +142,8 @@ async function getRouteToComponentModuleMap(routes) {
   }
 }
 
+// data LinksAndRoutes = LinksAndRoutes { links :: [<Link />], routes :: [<Route />]}
+// buildLinksAndRoutes :: RouteToComponentMap -> LinksAndRoutes
 function buildLinksAndRoutes(routeToComponentModuleMap) {
   // Using the routeToComponentMap build <Link /> and <Route /> components
   // arrays using dynamic import()s and return an object where
@@ -151,12 +166,8 @@ function buildLinksAndRoutes(routeToComponentModuleMap) {
   )
 }
 
-// renderRoutes :: Map ReactRouterRoute ComponentModule -> { links :: [Link], routes :: [Route] } -> Map ReactRouterRoute HTMLString
+// renderRoutes :: Map ReactRouterRoute ComponentModule -> LinksAndRoutes -> Map ReactRouterRoute HTMLString
 function renderRoutes(routeToComponentModuleMap, { links, routes }) {
-  // call reactServerDOM.renderToString here for all
-  // routes and put generated files in the right path
-  // under ./public/
-
   return Object.entries(routeToComponentModuleMap).reduce((acc, [route]) => {
     const context = {}
     const renderRoute = routeToRender => {
@@ -182,6 +193,8 @@ function renderRoutes(routeToComponentModuleMap, { links, routes }) {
   }, {})
 }
 
+// type ClientBundleEntryPoint = String
+// makeMain :: RouteToComponentMap -> ClientBundleEntryPoint
 function makeMain(routeToComponentModuleMap) {
   const linksAndRoutesJSXAndImports = Object.entries(routeToComponentModuleMap).reduce(
     (acc, [route, component], i) => {
@@ -222,6 +235,7 @@ ReactDOM.hydrate(
 }
 
 /* eslint-disable no-console */
+// run :: IO()
 async function run() {
   const routeToComponentModuleMap = await getRouteToComponentModuleMap(
     getReactRouterRoutes('./App/Routes')
@@ -236,6 +250,7 @@ async function run() {
 
   // write index.html files for each known route (does both static and dynamic right now but dynamic is wrong)
   const renderedRoutes = await renderRoutes(routeToComponentModuleMap, linksAndRoutes)
+  console.log('Routes to render', renderedRoutes)
   await Promise.all(
     Object.entries(renderedRoutes).map(async ([route, indexHTML]) => {
       const publicPath = resolve(__dirname, 'public', '.' + route)
