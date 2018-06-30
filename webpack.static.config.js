@@ -1,4 +1,6 @@
 const { resolve } = require('path')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+
 const isProd = process.env.NODE_ENV === 'production' ? true : false
 
 module.exports = {
@@ -18,8 +20,17 @@ module.exports = {
         use: {
           loader: 'babel-loader'
         }
+      },
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
       }
     ]
   },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].css'
+    })
+  ],
   mode: isProd ? 'production' : 'development'
 }

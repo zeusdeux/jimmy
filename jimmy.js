@@ -41,7 +41,7 @@ const { resolve, _join, relative } = path
 
 // 1.
 // generate route manifest from ./App/Routes/
-// shape { ReactRouterRouteName: component }
+// shape { ReactRouterRouteName: componentModule }
 
 // 2.
 // build <Link /> array
@@ -84,7 +84,7 @@ function getReactRouterRoutes(rootDir) {
 
     const result = filesData.reduce((acc, { isDirectory, path }) => {
       if (!isDirectory) {
-        if (path.endsWith('Main.js')) {
+        if (path.endsWith('Main.js') || path.endsWith('.css')) {
           return acc
         }
         acc.push(path)
@@ -197,7 +197,7 @@ function makeMain(routeToComponentModuleMap) {
   const linksAndRoutesJSXAndImports = Object.entries(routeToComponentModuleMap).reduce(
     (acc, [route, component], i) => {
       const Component = component.default.name || component.default.displayName
-      const LinkJSX = `<Link to="${route}">${route}</Link>`
+      const LinkJSX = `<Link key="${i}" to="${route}">${route}</Link>`
       const RouteJSX = `<Route key="${i}" exact path="${route}" component={${Component}} />`
 
       acc.linksJSX.push(LinkJSX)
@@ -218,15 +218,15 @@ function makeMain(routeToComponentModuleMap) {
 function _makeMain({ imports, linksJSX, routesJSX }) {
   return `import React from 'react'
 import ReactDOM from 'react-dom'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Link, Route } from 'react-router-dom'
 import App from './'
 ${imports.join('\n')}
 
 ReactDOM.hydrate(
   <BrowserRouter>
     <App
-      links={[${linksJSX.join(',').replace(/'/g, '')}]}
-      routes={[${routesJSX.join(',').replace(/'/g, '')}]} />
+      links={[${linksJSX.join(', ').replace(/'/g, '')}]}
+      routes={[${routesJSX.join(', ').replace(/'/g, '')}]} />
   </BrowserRouter>,
   document.querySelector('main')
 )`
@@ -237,26 +237,34 @@ async function run() {
     getReactRouterRoutes('./App/Routes')
   )
 
-  console.log(routeToComponentModuleMap)
+  // console.log('Routes to components map\n', routeToComponentModuleMap)
   const linksAndRoutes = buildLinksAndRoutes(routeToComponentModuleMap)
 
-  // wrote ./App/Main.js
+  // write ./App/Main.js
   const Main = makeMain(routeToComponentModuleMap)
   await writeFile('./App/Main.js', Main)
+  console.log('Generated', resolve(__dirname, './App/Main.js'))
 
   // write index.html files for each known route (does both static and dynamic right now but dynamic is wrong)
   const renderedRoutes = await renderRoutes(routeToComponentModuleMap, linksAndRoutes)
   await Promise.all(
     Object.entries(renderedRoutes).map(async ([route, indexHTML]) => {
       const publicPath = resolve(__dirname, 'public', '.' + route)
-      console.log(publicPath)
       await mkdirp(publicPath)
       await writeFile(`${publicPath}${publicPath.endsWith('/') ? '' : '/'}index.html`, indexHTML)
+      console.log('Generated', publicPath + '/index.html')
     })
   )
 
   // generate public/assets/app.js and css bundles
-  await execProm('npx webpack --config webpack.static.config.js')
+  const webpackStaticBundlingStdout = await execProm(
+    'npx webpack --config webpack.static.config.js'
+  )
+
+  const webpackStaticBundlingLogs = ['app.js', 'app.css']
+    .filter(f => webpackStaticBundlingStdout.includes(f))
+    .map(f => `Generated ${resolve(__dirname, `public/assets/${f}`)}`)
+  console.log(webpackStaticBundlingLogs.join('\n'))
 }
 
 function execProm(...args) {
@@ -272,4 +280,4 @@ function execProm(...args) {
 }
 
 // eslint-disable-next-line no-console
-run().then(console.log.bind(console))
+run().catch(console.error.bind(console))
