@@ -36,7 +36,7 @@ function getReactRouterRoutes(rootDir) {
 
     const result = filesData.reduce((acc, { isDirectory, path }) => {
       if (!isDirectory) {
-        if (path.endsWith('Main.js') || path.endsWith('.css')) {
+        if (path.endsWith('Main.js') || !/\.js$/.test(path)) {
           return acc
         }
         acc.push(path)
