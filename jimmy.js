@@ -193,6 +193,8 @@ async function run() {
 
   // clean out public/
   await remove('./public/')
+  console.log('Cleaned public/')
+
   // write index.html files for each known route (does both static and dynamic right now but dynamic is wrong)
   const renderedRoutes = await renderRoutes(routeToComponentModuleMap, linksAndRoutes)
   console.log('Routes to render', renderedRoutes)
@@ -206,13 +208,10 @@ async function run() {
   )
 
   // generate public/assets/app.js and css bundles
-  const webpackStaticBundlingStdout = await execProm(
-    'npx webpack --config webpack.static.config.js'
+  await execProm('npx webpack --config webpack.static.config.js')
+  const webpackStaticBundlingLogs = readdirSync('./public/assets').map(
+    f => `Generated ${resolve(__dirname, './public/assets/', f)}`
   )
-
-  const webpackStaticBundlingLogs = ['app.js', 'app.css', 'app.js.map', 'app.css.map']
-    .filter(f => webpackStaticBundlingStdout.includes(f))
-    .map(f => `Generated ${resolve(__dirname, `public/assets/${f}`)}`)
   console.log(webpackStaticBundlingLogs.join('\n'))
 }
 
