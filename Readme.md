@@ -28,7 +28,7 @@ index.html. ReactDOMServer.renderToStaticMarkup is used to render this file.
 Rendered file name depends on the route being rendered. If not found, index.default.js is used.
 Though this is sort of a lie as right now index.default.js is hardcoded to be used.
 
-`App/index.js` -> This react component will be given [<Link />] and [<Route />]
+`App/index.js` -> This react component will be given `[<Link />]` and `[<Route />]`
 It can choose to render those arrays however and where ever it wants. It's
 the shell for your application.
 
