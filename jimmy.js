@@ -16,7 +16,7 @@ const {
   promises: { writeFile }
 } = fs
 const { exec } = childProcess
-const { resolve, _join, relative } = path
+const { resolve, relative } = path
 
 // getReactRouterRoutes :: RelativePath -> [ReactRouterRoute]
 function getReactRouterRoutes(rootDir) {
