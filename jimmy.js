@@ -41,9 +41,6 @@ function getReactRouterRoutes(rootDir) {
         }
         acc.push(path)
       } else {
-        // this manual concatenation is to let webpack know to import everything under
-        // ./App/Routes by default and make it part of the bundle as we need it when
-        // we dynamically import those routes
         acc = acc.concat(getReactRouterRoutes('./App/Routes/' + path))
       }
       return acc
@@ -65,6 +62,9 @@ async function getRouteToComponentModuleMap(routes) {
   try {
     const routeToComponentMap = await Promise.all(
       routes.map(async route => {
+        // this manual concatenation is to let webpack know to import everything under
+        // ./App/Routes by default and make it part of the bundle as we need it when
+        // we dynamically import those routes
         const component = await import('./App/Routes/' + route)
         const reactRouterRoute = '/' + route.split('index.js')[0].replace(/\/$/, '')
         return {
