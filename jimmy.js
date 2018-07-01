@@ -60,7 +60,7 @@ function getReactRouterRoutes(rootDir) {
 // getRouteToComponentMap :: [ReactRouterRoute] -> RouteToComponentMap
 async function getRouteToComponentModuleMap(routes) {
   try {
-    const routeToComponentMap = await Promise.all(
+    const listOfRouteToComponentMaps = await Promise.all(
       routes.map(async route => {
         // this manual concatenation is to let webpack know to import everything under
         // ./App/Routes by default and make it part of the bundle as we need it when
@@ -74,7 +74,7 @@ async function getRouteToComponentModuleMap(routes) {
       })
     )
 
-    return routeToComponentMap.reduce((acc, { route, component }) => {
+    return listOfRouteToComponentMaps.reduce((acc, { route, component }) => {
       acc[route] = component
       return acc
     }, {})
