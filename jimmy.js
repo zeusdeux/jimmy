@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import childProcess from 'child_process'
 import mkdirp from 'make-dir'
+import fsExtra from 'fs-extra'
 
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
@@ -15,6 +16,7 @@ const {
   statSync,
   promises: { writeFile }
 } = fs
+const { remove } = fsExtra
 const { exec } = childProcess
 const { resolve, relative } = path
 
@@ -189,6 +191,8 @@ async function run() {
   await writeFile('./App/Main.js', Main)
   console.log('Generated', resolve(__dirname, './App/Main.js'))
 
+  // clean out public/
+  await remove('./public/')
   // write index.html files for each known route (does both static and dynamic right now but dynamic is wrong)
   const renderedRoutes = await renderRoutes(routeToComponentModuleMap, linksAndRoutes)
   console.log('Routes to render', renderedRoutes)
