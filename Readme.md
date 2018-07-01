@@ -45,8 +45,8 @@ Component: App/Routes/home/:param/index.js -> Route: /home/:param
 1. Generate route list relative to ./App/Routes/
 2. Generate route manifest from route list received from step 1. Its shape is `{ ReactRouterRoute: componentModule }`
 3.
-    - build <Link /> array
-    - build <Route /> array
+    - build `<Link></Link>` array
+    - build `<Route />` array
 4. Render a map from route to index.html string for that route
 5. Generate `App/Main.js` using `makeMain` that contains all the imports and `<Link />` and `<Route />` jsx.
 This will be used as the entry point to make the client bundle. Therefore, it should have a call to `ReactDOM.hydrate`
