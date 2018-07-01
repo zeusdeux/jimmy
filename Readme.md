@@ -17,6 +17,7 @@ the root `<dynamic route>/index.html` for all dynamic routes and from there let 
 
 - [x] Support static routes
 - [x] Support dynamic routes (supported only client side)
+- [ ] Support using data sources
 - [ ] Generate nginx config to complete the dynamic routes picture
 
 # Expected directory structure
