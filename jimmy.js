@@ -18,65 +18,6 @@ const {
 const { exec } = childProcess
 const { resolve, _join, relative } = path
 
-/**
- * Expected directory structure:
- *
- * ./index.js -> project root has an index.js which exports a react component
- * that is used as a shell to generate all files. It's equivalent to
- * index.html. ReactDOMServer.renderToStaticMarkup is used to render this file.
- * Rendered file name depends on the route being rendered. If not found, index.default.js is used.
- * Though this is sort of a lie as right now index.default.js is hardcoded to be used.
- *
- * App/index.js -> This react component will be given [<Link />] and [<Route />]
- * It can choose to render those arrays however and where ever it wants. It's
- * the shell for your application.
- *
- * App/Routes -> This folder contains all the routes. The hierarchy matches the
- * the name of the route. For example:
- *
- * Component: App/Routes/index.js -> Route: /
- * Component: App/Routes/home/index.js -> Route: /home
- * Component: App/Routes/home/:param/index.js -> Route: /home/:param
- *
- */
-
-// 1.
-// generate route list relative to ./App/Routes/
-
-// 2.
-// generate route manifest from route list received from step 1
-// shape { ReactRouterRoute: componentModule }
-
-// 3.
-// build <Link /> array
-// build <Route /> array
-
-// 4.
-// Render a map from route to index.html string for that route
-
-// 5.
-// generate App/Main.js using makeMain that contains all the imports
-// and <Link /> and <Route /> jsx. This will be used as the entry point
-// to make the client bundle. Therefore, it should have a call to
-// ReactDOM.hydrate or ReactDOM.render.
-
-// 6.
-// Write App/Main.js down to disk
-
-// 7.
-// Render all index.html for all routes
-
-// 8.
-// generate js and css bundles using App/Main.js using that as entry for webpack
-// put em in /public/assets. The config file used for this is webpack.static.config.js
-
-// Done!
-
-// NOTES:
-// Redirects are reified. This means, while rendering if a redirect is encountered,
-// for e.g., / redirects to /home then the redirect is followed during rendering
-// and the final route that renders to string is put in the folder for /.
-
 // getReactRouterRoutes :: RelativePath -> [ReactRouterRoute]
 function getReactRouterRoutes(rootDir) {
   // readdir ./routes and recursively get a list of filenames relative to ./routes
