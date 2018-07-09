@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import childProcess from 'child_process'
+
 import mkdirp from 'make-dir'
 import fsExtra from 'fs-extra'
 
@@ -19,24 +20,25 @@ const {
 const { remove } = fsExtra
 const { exec } = childProcess
 const { resolve, relative } = path
+const CWD = process.cwd()
 
 // getReactRouterRoutes :: RelativePath -> [ReactRouterRoute]
-function getReactRouterRoutes(rootDir) {
+function getReactRouterRoutes(routesDir) {
   // readdir ./routes and recursively get a list of filenames relative to ./routes
   // return that as an array
   try {
-    const dir = resolve(__dirname, rootDir)
-    const files = readdirSync(dir)
-    const filesData = files.map(file => {
-      const subDir = resolve(dir, file)
+    const absoluteRoutesDir = resolve(CWD, routesDir)
+    const files = readdirSync(absoluteRoutesDir)
+    const pathsList = files.map(file => {
+      const subDir = resolve(absoluteRoutesDir, file)
       const f = statSync(subDir)
       return {
         isDirectory: f.isDirectory(),
-        path: relative(resolve(__dirname, './App/Routes'), resolve(subDir))
+        path: relative(resolve(CWD, './App/Routes'), subDir)
       }
     })
 
-    const result = filesData.reduce((acc, { isDirectory, path }) => {
+    const result = pathsList.reduce((acc, { isDirectory, path }) => {
       if (!isDirectory) {
         if (path.endsWith('Main.js') || !/\.js$/.test(path)) {
           return acc
@@ -154,7 +156,9 @@ async function run() {
   console.log('Routes to render', renderedRoutes)
   await Promise.all(
     Object.entries(renderedRoutes).map(async ([route, indexHTML]) => {
-      const publicPath = resolve(__dirname, 'public', '.' + route)
+      // replace :param in the react route with _param in the directory name generated
+      // so that it's easier to write rewrite rules for tools like serve, nginx, etc
+      const publicPath = resolve(CWD, 'public', '.' + route.replace(/\/:/g, '/_'))
       await mkdirp(publicPath)
       await writeFile(`${publicPath}${publicPath.endsWith('/') ? '' : '/'}index.html`, indexHTML)
       console.log('Generated', publicPath + '/index.html')
@@ -162,9 +166,9 @@ async function run() {
   )
 
   // generate public/assets/app.js and css bundles
-  await execProm('npx webpack --config webpack.static.config.js')
+  await execProm(`npx webpack --config ${path.resolve(CWD, 'webpack.static.config.js')}`)
   const webpackStaticBundlingLogs = readdirSync('./public/assets').map(
-    f => `Generated ${resolve(__dirname, './public/assets/', f)}`
+    f => `Generated ${resolve(CWD, './public/assets/', f)}`
   )
   console.log(webpackStaticBundlingLogs.join('\n'))
 }

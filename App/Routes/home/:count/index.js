@@ -7,8 +7,10 @@ export default function HomeWithParam({ match }) {
 
   return (
     <>
-      <h2>Received param: {match.params.count}</h2>
-      <Link to={`/home/${Number.isNaN(count) ? 0 : count + 1}`}>Next</Link>
+      <h2 suppressHydrationWarning>Received param: {match.params.count}</h2>
+      <Link suppressHydrationWarning to={`/home/${Number.isNaN(count) ? 0 : count + 1}`}>
+        Next
+      </Link>
     </>
   )
 }
@@ -16,3 +18,5 @@ export default function HomeWithParam({ match }) {
 HomeWithParam.propTypes = {
   match: PropTypes.object.isRequired
 }
+
+HomeWithParam.getData = async () => [{ count: 0 }, { count: 1 }]
