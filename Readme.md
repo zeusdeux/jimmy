@@ -32,6 +32,9 @@ Though this is sort of a lie as right now index.default.js is hardcoded to be us
 It can choose to render those arrays however and where ever it wants. It's
 the shell for your application.
 
+`App/Main.js` -> This is the entry point for the client side app bundle.
+Therefore, it should have a call to `ReactDOM.hydrate`
+
 `App/Routes` -> This folder contains all the routes. The hierarchy matches the
 the name of the route. For example:
 
@@ -49,12 +52,9 @@ Component: App/Routes/home/:param/index.js -> Route: /home/:param
     - build `<Link></Link>` array
     - build `<Route />` array
 4. Render a map from react router route to `index.html` string for that route
-5. Generate `App/Main.js` using `makeMain` that contains all the imports and `<Link />` and `<Route />` jsx.
-This will be used as the entry point to make the client bundle. Therefore, it should have a call to `ReactDOM.hydrate`
-or `ReactDOM.render` (deprecated for SSR).
-6. Write `App/Main.js` down to disk
-7. Render all `index.html` files for all routes. They are generated from `index.default.js` found in the root of this project.
-8. Generate js and css bundles using `App/Main.js` as entry for webpack and put 'em in `/public/assets`.
+5. Write `App/Main.js` down to disk
+6. Render all `index.html` files for all routes. They are generated from `index.default.js` found in the root of this project.
+7. Generate js and css bundles using `App/Main.js` as entry for webpack and put 'em in `/public/assets`.
    The config file used for this is `webpack.static.config.js` in the root of this project.
 
 And you're done!

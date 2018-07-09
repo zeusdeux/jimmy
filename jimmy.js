@@ -136,47 +136,6 @@ function renderRoutes(routeToComponentModuleMap, { links, routes }) {
   }, {})
 }
 
-// type ClientBundleEntryPoint = String
-// makeMain :: RouteToComponentMap -> ClientBundleEntryPoint
-function makeMain(routeToComponentModuleMap) {
-  const linksAndRoutesJSXAndImports = Object.entries(routeToComponentModuleMap).reduce(
-    (acc, [route, component], i) => {
-      const Component = component.default.name || component.default.displayName
-      const LinkJSX = `<Link key="${i}" to="${route}">${route}</Link>`
-      const RouteJSX = `<Route key="${i}" exact path="${route}" component={${Component}} />`
-
-      acc.linksJSX.push(LinkJSX)
-      acc.routesJSX.push(RouteJSX)
-      acc.imports.push(`import ${Component} from './Routes${route}'`)
-      return acc
-    },
-    {
-      linksJSX: [],
-      routesJSX: [],
-      imports: []
-    }
-  )
-
-  return _makeMain(linksAndRoutesJSXAndImports)
-}
-
-function _makeMain({ imports, linksJSX, routesJSX }) {
-  return `import React from 'react'
-import ReactDOM from 'react-dom'
-import { BrowserRouter, Link, Route } from 'react-router-dom'
-import App from './'
-${imports.join('\n')}
-
-ReactDOM.hydrate(
-  <BrowserRouter>
-    <App
-      links={[${linksJSX.join(', ').replace(/'/g, '')}]}
-      routes={[${routesJSX.join(', ').replace(/'/g, '')}]} />
-  </BrowserRouter>,
-  document.querySelector('main')
-)`
-}
-
 /* eslint-disable no-console */
 // run :: IO()
 async function run() {
@@ -185,11 +144,6 @@ async function run() {
   )
 
   const linksAndRoutes = buildLinksAndRoutes(routeToComponentModuleMap)
-
-  // write ./App/Main.js
-  const Main = makeMain(routeToComponentModuleMap)
-  await writeFile('./App/Main.js', Main)
-  console.log('Generated', resolve(__dirname, './App/Main.js'))
 
   // clean out public/
   await remove('./public/')
