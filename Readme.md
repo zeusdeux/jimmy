@@ -44,6 +44,29 @@ Component: App/Routes/home/index.js -> Route: /home
 Component: App/Routes/home/:param/index.js -> Route: /home/:param
 ```
 
+Each route component can expose a static async `getData` function that resolves to the data
+needed by the route. It should be keyed by the route params. For example:
+
+For a route such as `/home/:username/product/:productId`, the `getData` function should return
+a data structure such as:
+
+```js
+[
+  {
+    username: 'abc',
+    productId: '10',
+    ...additional data
+  },
+  {
+    username: 'xyz',
+    productId: '20',
+    ...additional data
+  }
+]
+```
+
+The additional data will be passed in as `props.data` to the component for the route.
+
 # How it works
 
 1. Generate route list relative to `App/Routes/`
@@ -52,9 +75,8 @@ Component: App/Routes/home/:param/index.js -> Route: /home/:param
     - build `<Link></Link>` array
     - build `<Route />` array
 4. Render a map from react router route to `index.html` string for that route
-5. Write `App/Main.js` down to disk
-6. Render all `index.html` files for all routes. They are generated from `index.default.js` found in the root of this project.
-7. Generate js and css bundles using `App/Main.js` as entry for webpack and put 'em in `/public/assets`.
+5. Render all `index.html` files for all routes. They are generated from `index.default.js` found in the root of this project.
+6. Generate js and css bundles using `App/Main.js` as entry for webpack and put 'em in `/public/assets`.
    The config file used for this is `webpack.static.config.js` in the root of this project.
 
 And you're done!

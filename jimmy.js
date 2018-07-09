@@ -64,27 +64,73 @@ function getReactRouterRoutes(routesDir) {
 // getRouteToComponentMap :: [ReactRouterRoute] -> RouteToComponentMap
 async function getRouteToComponentModuleMap(routes) {
   try {
+    const getReactRouterRoute = route => '/' + route.split('index.js')[0].replace(/\/$/, '')
     const listOfRouteToComponentMaps = await Promise.all(
       routes.map(async route => {
         // this manual concatenation is to let webpack know to import everything under
         // ./App/Routes by default and make it part of the bundle as we need it when
         // we dynamically import those routes
         const component = await import('./App/Routes/' + route)
-        const reactRouterRoute = '/' + route.split('index.js')[0].replace(/\/$/, '')
-        return {
-          route: reactRouterRoute,
-          component
+        let result = [
+          {
+            route: getReactRouterRoute(route),
+            component,
+            hasReifiedParam: false
+          }
+        ]
+
+        // check if route has params
+        const routeParams = (route.match(/\/:\w+/) || []).map(param => param.replace('/:', ''))
+
+        if (routeParams.length) {
+          const componentData = await component.default.getData()
+
+          result = result.concat(
+            componentData.map(data => {
+              const reifiedParameterizedRoute = route.replace(/\/:(\w+)/, (_, param) => {
+                const value = data[param]
+                if (Object.is(value, undefined)) {
+                  throw new Error(
+                    `Data for ${param} not found for component ${component.name ||
+                      component.displayName}`
+                  )
+                } else {
+                  return `/${value}`
+                }
+              })
+              return {
+                route: getReactRouterRoute(reifiedParameterizedRoute),
+                component,
+                hasReifiedParam: true
+                // data: componentData.data
+              }
+            })
+          )
         }
+
+        return result
       })
     )
 
-    return listOfRouteToComponentMaps.reduce((acc, { route, component }) => {
-      acc[route] = component
-      return acc
-    }, {})
+    return flatten(listOfRouteToComponentMaps).reduce(
+      (acc, { route, component, hasReifiedParam }) => {
+        acc[route] = { component, hasReifiedParam }
+        return acc
+      },
+      {}
+    )
   } catch (e) {
     throw e
   }
+}
+
+function flatten(arr) {
+  return arr.reduce((acc, v) => {
+    if (Array.isArray(v)) {
+      v = flatten(v)
+    }
+    return acc.concat(v)
+  }, [])
 }
 
 // data LinksAndRoutes = LinksAndRoutes { links :: [<Link />], routes :: [<Route />]}
@@ -92,15 +138,18 @@ async function getRouteToComponentModuleMap(routes) {
 function buildLinksAndRoutes(routeToComponentModuleMap) {
   // Using the routeToComponentMap build <Link /> and <Route /> components
   // arrays using dynamic import()s and return an object where
-  // { links: [Link], routes: [Route]}
-
+  // { links: [Link], routes: [Route] }
   return Object.entries(routeToComponentModuleMap).reduce(
-    (acc, [route, componentModule], i) => {
+    (acc, [route, { component: componentModule, hasReifiedParam }], i) => {
+      if (hasReifiedParam) {
+        return acc
+      }
       const LinkC = (
         <Link to={route} key={i}>
           {route}
         </Link>
       )
+      // figure out how to
       const RouteC = <Route key={i} exact path={route} component={componentModule.default} />
 
       acc.links.push(LinkC)
